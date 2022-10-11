@@ -1,0 +1,51 @@
+pipeline {
+    agent { label 'node-1' }
+     tools{
+        maven 'maven-386'
+        jdk 'jdk-1.8'
+        }
+    stages {
+        stage ('SCM') {
+            steps {
+                
+                git 'https://github.com/jabedhasan21/java-hello-world-with-maven.git'
+             withMaven {
+                       sh "mvn clean verify"
+                   }
+            }
+        }
+	}
+	post {
+        // Clean after build
+        always {
+            cleanWs(cleanWhenNotBuilt: false,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true)
+                 }
+          }
+}
+
+
+
+
+#######################
+
+withMaven(globalMavenSettingsConfig: 'null', jdk: 'jdk-1.8', maven: 'maven-386', mavenSettingsConfig: 'null') {
+    // some block
+}
+
+
+ stage('SonarQube analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh "./gradlew sonarqube"
+                }
+            }
+        }
+        stage("Quality gate") {
+            steps {
+                waitForQualityGate abortPipeline: true
+            }
+        }
+    }
